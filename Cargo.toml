@@ -6,7 +6,7 @@ license = "MIT"
 description = "Library listing mounted or mountable drives on linux"
 repository = "https://github.com/sorcerersr/drives"
 keywords = ["lib", "linux", "drives", "partitions", "block-devices"]
-categories = ["library"]
+categories = ["os::linux-apis"]
 authors = ["Stefan Rabmund <sorcerersr@mailbox.org>"]
 readme = "README.md"
 
