@@ -1,6 +1,6 @@
 [package]
 name = "drives"
-version = "0.0.1"
+version = "0.0.2"
 edition = "2021"
 license = "MIT"
 description = "Library listing mounted or mountable drives on linux"
@@ -11,3 +11,6 @@ authors = ["Stefan Rabmund <sorcerersr@mailbox.org>"]
 readme = "README.md"
 
 [dependencies]
+
+[dev-dependencies]
+mockall = "0.11.3"
