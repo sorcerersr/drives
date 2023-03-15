@@ -5,21 +5,13 @@
 //! Uses `/sys/block` to retreive information.
 //!
 
+use anyhow::{anyhow, Context, Result};
+
 use std::fs::DirEntry;
 
 use fs_wrap::read_file_to_string;
 
 mod fs_wrap;
-
-#[derive(Debug)]
-pub enum Error {
-    SysDirAccess,
-    SysDirEntry,
-    SysDirEntryName,
-    PathBuild,
-    ReadFile,
-    FileType,
-}
 
 /// A mounted or mountable drive (usually this will be a partition)
 #[derive(Debug)]
@@ -32,39 +24,47 @@ pub struct Drive {
     pub is_removable: bool,
 }
 
-fn read_bool_file(path: &str) -> Result<bool, Error> {
-    let content = read_file_to_string(path).map_err(|_err| Error::ReadFile)?;
+fn read_bool_file(path: &str) -> Result<bool> {
+    let content =
+        read_file_to_string(path).with_context(|| format!("Failed to read file from {}", path))?;
     Ok("1".eq(&content))
 }
 
-fn name_from_direntry(entry: &DirEntry) -> Result<String, Error> {
-    entry
-        .file_name()
-        .into_string()
-        .map_err(|_err| Error::SysDirEntryName)
+fn name_from_direntry(entry: &DirEntry) -> Result<String> {
+    if let Ok(result) = entry.file_name().into_string() {
+        return Ok(result);
+    } else {
+        return Err(anyhow!("Failed to convert OsString to String"));
+    }
 }
 
-fn build_path(dir_entry: &DirEntry, path_to_add: &str) -> Result<String, Error> {
+fn build_path(dir_entry: &DirEntry, path_to_add: &str) -> Result<String> {
     let mut path = if let Some(path) = dir_entry.path().to_str() {
         path.to_string()
     } else {
-        return Err(Error::PathBuild);
+        return Err(anyhow!("Failed to append '{}' to path", path_to_add));
     };
     path.push_str(path_to_add);
     Ok(path)
 }
 
-fn find_partitions(dir_entry: &DirEntry) -> Result<Vec<String>, Error> {
+fn find_partitions(dir_entry: &DirEntry) -> Result<Vec<String>> {
     let mut partitions = vec![];
-    let base_dir_name = name_from_direntry(dir_entry).map_err(|_err| Error::PathBuild)?;
+    let base_dir_name = name_from_direntry(dir_entry)?;
 
-    for entry in fs_wrap::read_dir(dir_entry.path()).map_err(|_err| Error::SysDirAccess)? {
-        let entry = entry.map_err(|_err| Error::SysDirEntry)?;
-        if entry.file_type().map_err(|_err| Error::FileType)?.is_dir() {
-            let dir_name = name_from_direntry(&entry)?;
-            if dir_name.starts_with(&base_dir_name) {
-                partitions.push(dir_name);
+    for entry in fs_wrap::read_dir(dir_entry.path())
+        .with_context(|| format!("Failed to read dir {:#?}", dir_entry.path()))?
+    {
+        let entry = entry.with_context(|| "Failed to access dir entry")?;
+        if let Ok(file_type) = entry.file_type() {
+            if file_type.is_dir() {
+                let dir_name = name_from_direntry(&entry)?;
+                if dir_name.starts_with(&base_dir_name) {
+                    partitions.push(dir_name);
+                }
             }
+        } else {
+            return Err(anyhow!("Couldn't get file type for {:?}", entry.path()));
         }
     }
     Ok(partitions)
@@ -72,10 +72,10 @@ fn find_partitions(dir_entry: &DirEntry) -> Result<Vec<String>, Error> {
 
 /// Reads /sys/block and its sub-directories to determine and return a list of
 /// partitions represented by instances of the Drive struct.
-pub fn get_drives() -> Result<Vec<Drive>, Error> {
+pub fn get_drives() -> Result<Vec<Drive>> {
     let mut drives = vec![];
-    for entry in fs_wrap::read_dir("/sys/block").map_err(|_err| Error::SysDirAccess)? {
-        let entry = entry.map_err(|_err| Error::SysDirEntry)?;
+    for entry in fs_wrap::read_dir("/sys/block").with_context(|| "Failed to access /sys/block")? {
+        let entry = entry.with_context(|| "Failed to access dir entry")?;
 
         let device_name = name_from_direntry(&entry)?;
 
