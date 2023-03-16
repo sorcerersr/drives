@@ -1,5 +1,5 @@
 //!
-//! `Drives` A small library to get information about mountable/mounted drives
+//! `Drives` is a library to get information about mountable/mounted drives
 //! on a Linux system.
 //!
 //! Uses `/sys/block` to retreive information.
@@ -13,15 +13,22 @@ use fs_wrap::read_file_to_string;
 
 mod fs_wrap;
 
-/// A mounted or mountable drive (usually this will be a partition)
+/// A block device
 #[derive(Debug)]
-pub struct Drive {
+pub struct Device {
     /// The name of the block device
-    pub device: String,
-    /// the name of the partition
-    pub partition: String,
+    pub name: String,
+    /// list of partitions
+    pub partitions: Vec<Partition>,
     /// is it a fixed device or a removable one like a flash drive or sd card
     pub is_removable: bool,
+}
+
+/// partition of a device
+#[derive(Debug)]
+pub struct Partition {
+    /// the name of the partitions
+    pub name: String,
 }
 
 fn read_bool_file(path: &str) -> Result<bool> {
@@ -48,7 +55,7 @@ fn build_path(dir_entry: &DirEntry, path_to_add: &str) -> Result<String> {
     Ok(path)
 }
 
-fn find_partitions(dir_entry: &DirEntry) -> Result<Vec<String>> {
+fn find_partitions(dir_entry: &DirEntry) -> Result<Vec<Partition>> {
     let mut partitions = vec![];
     let base_dir_name = name_from_direntry(dir_entry)?;
 
@@ -60,7 +67,7 @@ fn find_partitions(dir_entry: &DirEntry) -> Result<Vec<String>> {
             if file_type.is_dir() {
                 let dir_name = name_from_direntry(&entry)?;
                 if dir_name.starts_with(&base_dir_name) {
-                    partitions.push(dir_name);
+                    partitions.push(Partition { name: dir_name });
                 }
             }
         } else {
@@ -70,10 +77,10 @@ fn find_partitions(dir_entry: &DirEntry) -> Result<Vec<String>> {
     Ok(partitions)
 }
 
-/// Reads /sys/block and its sub-directories to determine and return a list of
-/// partitions represented by instances of the Drive struct.
-pub fn get_drives() -> Result<Vec<Drive>> {
-    let mut drives = vec![];
+/// Reads /sys/block and its sub-directories to determine and return drives as a list of
+/// devices with partitions
+pub fn get_drives() -> Result<Vec<Device>> {
+    let mut devices = vec![];
     for entry in fs_wrap::read_dir("/sys/block").with_context(|| "Failed to access /sys/block")? {
         let entry = entry.with_context(|| "Failed to access dir entry")?;
 
@@ -84,18 +91,14 @@ pub fn get_drives() -> Result<Vec<Drive>> {
 
         let partitions = find_partitions(&entry)?;
 
-        if !partitions.is_empty() {
-            for partition in partitions {
-                let drive = Drive {
-                    device: device_name.clone(),
-                    partition,
-                    is_removable: removable,
-                };
-                drives.push(drive);
-            }
-        }
+        let device = Device {
+            name: device_name.clone(),
+            partitions,
+            is_removable: removable,
+        };
+        devices.push(device);
     }
-    Ok(drives)
+    Ok(devices)
 }
 
 #[cfg(test)]
