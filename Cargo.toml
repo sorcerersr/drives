@@ -2,7 +2,7 @@
 name = "drives"
 version = "0.0.2"
 edition = "2021"
-license = "MIT"
+license = "MIT OR Apache-2.0"
 description = "Library listing mounted or mountable drives on linux"
 repository = "https://github.com/sorcerersr/drives"
 keywords = ["lib", "linux", "drives", "partitions", "block-devices"]
