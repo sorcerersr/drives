@@ -14,4 +14,9 @@ readme = "README.md"
 anyhow = "1.0"
 
 [dev-dependencies]
-mockall = "0.11.3"
+tempfile = "3"
+
+
+[[example]]
+name = "simple_main"
+path = "examples/simple_main.rs"
