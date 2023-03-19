@@ -60,7 +60,7 @@ impl Drives {
         Ok(partitions)
     }
 
-    fn get_drives(&self) -> Result<Vec<Device>> {
+    fn get_devices(&self) -> Result<Vec<Device>> {
         let mut devices = vec![];
         for entry in
             fs_wrap::read_dir(&self.base_path).with_context(|| "Failed to access /sys/block")?
@@ -95,19 +95,62 @@ impl Drives {
 /// devices with partitions
 pub fn get_devices() -> Result<Vec<Device>> {
     let drives = Drives::new();
-    drives.get_drives()
+    drives.get_devices()
 }
 
 #[cfg(test)]
 mod tests {
 
+    use tempfile::tempdir;
+
     use super::*;
+
+    use std::{fs, io::Write};
 
     #[test]
     fn test_drives() {
-        let drives = get_devices().unwrap();
-        drives.iter().for_each(|drive| {
-            println!("{:?}", drive);
-        })
+        // a temp dir to represent /sys/block
+        let temp_dir = tempdir().unwrap();
+
+        // a subdir for a device (in this example an nvme drive=
+        let next_dir_path = temp_dir.path().join("nvme0n1");
+        fs::create_dir(&next_dir_path).unwrap();
+
+        // create a "removable" flag file for the device
+        let mut removable_file = fs::File::create(next_dir_path.join("removable")).unwrap();
+        removable_file.write_all("0".as_bytes()).unwrap();
+
+        // now create two partitions that are represented by subfolders
+        let part_one_dir_path = next_dir_path.join("nvme0n1p1");
+        fs::create_dir(part_one_dir_path).unwrap();
+        let part_two_dir_path = next_dir_path.join("nvme0n1p2");
+        fs::create_dir(part_two_dir_path).unwrap();
+        // and create a third dir that isn't following the partition name schema
+        // and should therefor not be identified as a partition
+        let power_dir_path = next_dir_path.join("power");
+        fs::create_dir(power_dir_path).unwrap();
+
+        // execute
+        let drives = Drives {
+            base_path: temp_dir.path().to_str().unwrap().to_owned(),
+        };
+        let devices = drives.get_devices().unwrap();
+
+        // now verify the results
+        assert_eq!(1, devices.len());
+        let device = devices.get(0).unwrap();
+        assert_eq!("nvme0n1", device.name);
+        assert!(!device.is_removable);
+        assert_eq!(2, device.partitions.len());
+        let part1 = device
+            .partitions
+            .iter()
+            .find(|part| part.name.eq("nvme0n1p1"));
+        assert!(part1.is_some());
+        let part2 = device
+            .partitions
+            .iter()
+            .find(|part| part.name.eq("nvme0n1p2"));
+        assert!(part2.is_some());
     }
 }
