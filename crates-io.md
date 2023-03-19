@@ -16,10 +16,6 @@ cargo run --example simple_main
 
 Documentation can be found on [docs.rs](https://docs.rs/drives/latest/drives/).
 
-## crates.io
-
-Drives can be found on [crates.io](https://crates.io/crates/drives/).
-
 ## License
 
 

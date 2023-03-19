@@ -8,7 +8,7 @@ repository = "https://github.com/sorcerersr/drives"
 keywords = ["lib", "linux", "drives", "partitions", "block-devices"]
 categories = ["os::linux-apis"]
 authors = ["Stefan Rabmund <sorcerersr@mailbox.org>"]
-readme = "README.md"
+readme = "crates-io.md"
 
 [dependencies]
 anyhow = "1.0"
