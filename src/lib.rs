@@ -20,6 +20,11 @@ pub struct Device {
     pub partitions: Vec<Partition>,
     /// is it a fixed device or a removable one like a flash drive or sd card
     pub is_removable: bool,
+    /// the model string - most common a combination of vendor name and model identifier
+    /// will be None for virtual devices
+    pub model: Option<String>,
+    /// the hardware serial string
+    pub serial: Option<String>,
 }
 
 /// partition of a device
@@ -60,6 +65,23 @@ impl Drives {
         Ok(partitions)
     }
 
+    fn read_model_and_serial_if_available(
+        &self,
+        dir_entry: &DirEntry,
+    ) -> (Option<String>, Option<String>) {
+        let device_subdir_path = dir_entry.path().join("device");
+
+        if !device_subdir_path.exists() {
+            return (None, None);
+        }
+        let model_file_path = device_subdir_path.join("model");
+        let serial_file_path = device_subdir_path.join("serial");
+        let model = fs_wrap::read_file_to_string(model_file_path.as_path()).ok();
+        let serial = fs_wrap::read_file_to_string(serial_file_path.as_path()).ok();
+
+        (model, serial)
+    }
+
     fn get_devices(&self) -> Result<Vec<Device>> {
         let mut devices = vec![];
         for entry in
@@ -74,10 +96,14 @@ impl Drives {
 
             let partitions = self.find_partitions(&entry)?;
 
+            let model_and_serial = self.read_model_and_serial_if_available(&entry);
+
             let device = Device {
                 name: device_name.clone(),
                 partitions,
                 is_removable: removable,
+                model: model_and_serial.0,
+                serial: model_and_serial.1,
             };
             devices.push(device);
         }

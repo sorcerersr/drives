@@ -15,8 +15,8 @@ pub fn read_dir(path: &str) -> io::Result<ReadDir> {
 }
 
 pub fn read_bool_file(path: &str) -> Result<bool> {
-    let content =
-        read_file_to_string(path).with_context(|| format!("Failed to read file from {}", path))?;
+    let content = read_file_to_string(Path::new(path))
+        .with_context(|| format!("Failed to read file from {}", path))?;
     Ok("1".eq(&content))
 }
 
@@ -38,14 +38,12 @@ pub fn build_path(dir_entry: &DirEntry, path_to_add: &str) -> Result<String> {
     Ok(path)
 }
 
-pub fn read_file_to_string(path: &str) -> io::Result<String> {
-    let path = Path::new(path);
-
+pub fn read_file_to_string(path: &Path) -> io::Result<String> {
     let mut file = File::open(path)?;
 
     let mut result = String::new();
     file.read_to_string(&mut result)?;
-
+    result = result.replace('\n', "").trim().to_owned();
     Ok(result)
 }
 
@@ -81,7 +79,7 @@ mod tests {
         test_file.write_all("content".as_bytes()).unwrap();
 
         // call the method under test
-        let result = read_file_to_string(test_file.path().to_str().unwrap());
+        let result = read_file_to_string(test_file.path());
         assert_eq!("content", result.unwrap());
     }
 }
