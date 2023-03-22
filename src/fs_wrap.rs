@@ -47,6 +47,17 @@ pub fn read_file_to_string(path: &Path) -> io::Result<String> {
     Ok(result)
 }
 
+pub fn read_file_to_u64(path: &str) -> Result<u64> {
+    let mut content = read_file_to_string(Path::new(path))?;
+
+    let size_as_u64 = if let Ok(size) = content.parse() {
+        size
+    } else {
+        return Err(anyhow!("Failed to convert '{}' to u64", content));
+    };
+    Ok(size_as_u64)
+}
+
 #[cfg(test)]
 mod tests {
 

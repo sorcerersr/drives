@@ -6,6 +6,7 @@
 //!
 
 use anyhow::{anyhow, Context, Result};
+use fs_wrap::build_path;
 
 mod fs_wrap;
 
@@ -25,6 +26,7 @@ pub struct Device {
     pub model: Option<String>,
     /// the hardware serial string
     pub serial: Option<String>,
+    pub size: u64,
 }
 
 /// partition of a device
@@ -32,6 +34,7 @@ pub struct Device {
 pub struct Partition {
     /// the name of the partitions
     pub name: String,
+    pub size: u64,
 }
 
 struct Drives {
@@ -55,7 +58,11 @@ impl Drives {
                 if file_type.is_dir() {
                     let dir_name = fs_wrap::name_from_direntry(&entry)?;
                     if dir_name.starts_with(&base_dir_name) {
-                        partitions.push(Partition { name: dir_name });
+                        let size = fs_wrap::read_file_to_u64(&build_path(&entry, "/size")?)?;
+                        partitions.push(Partition {
+                            name: dir_name,
+                            size,
+                        });
                     }
                 }
             } else {
@@ -97,6 +104,7 @@ impl Drives {
             let partitions = self.find_partitions(&entry)?;
 
             let model_and_serial = self.read_model_and_serial_if_available(&entry);
+            let size = fs_wrap::read_file_to_u64(&build_path(&entry, "/size")?)?;
 
             let device = Device {
                 name: device_name.clone(),
@@ -104,6 +112,7 @@ impl Drives {
                 is_removable: removable,
                 model: model_and_serial.0,
                 serial: model_and_serial.1,
+                size,
             };
             devices.push(device);
         }
