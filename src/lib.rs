@@ -9,6 +9,7 @@ use anyhow::{anyhow, Context, Result};
 use fs_wrap::build_path;
 
 mod fs_wrap;
+mod mounts;
 
 use std::fs::DirEntry;
 
