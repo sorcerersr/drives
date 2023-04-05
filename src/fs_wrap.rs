@@ -6,7 +6,7 @@
 use anyhow::{anyhow, Context, Result};
 use std::{
     fs::{self, DirEntry, File, ReadDir},
-    io::{self, Read},
+    io::{self, BufRead, Read},
     path::Path,
 };
 
@@ -48,7 +48,7 @@ pub fn read_file_to_string(path: &Path) -> io::Result<String> {
 }
 
 pub fn read_file_to_u64(path: &str) -> Result<u64> {
-    let mut content = read_file_to_string(Path::new(path))?;
+    let content = read_file_to_string(Path::new(path))?;
 
     let size_as_u64 = if let Ok(size) = content.parse() {
         size
@@ -56,6 +56,14 @@ pub fn read_file_to_u64(path: &str) -> Result<u64> {
         return Err(anyhow!("Failed to convert '{}' to u64", content));
     };
     Ok(size_as_u64)
+}
+
+pub fn read_lines<P>(filename: P) -> io::Result<io::Lines<io::BufReader<File>>>
+where
+    P: AsRef<Path>,
+{
+    let file = File::open(filename)?;
+    Ok(io::BufReader::new(file).lines())
 }
 
 #[cfg(test)]

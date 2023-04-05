@@ -7,8 +7,10 @@
 
 use anyhow::{anyhow, Context, Result};
 use fs_wrap::build_path;
+use mounts::{Mount, Mounts};
 
 mod fs_wrap;
+mod mounts;
 
 use std::fs::DirEntry;
 
@@ -34,15 +36,20 @@ pub struct Device {
 pub struct Partition {
     /// the name of the partitions
     pub name: String,
+    /// size of the partition on 512 byte blocks
     pub size: u64,
+    /// the mountpoint if mounted
+    pub mountpoint: Option<String>,
 }
 
 struct Drives {
     base_path: String,
+    mounts: Mounts,
 }
 
 impl Drives {
     fn find_partitions(&self, dir_entry: &DirEntry) -> Result<Vec<Partition>> {
+        let mount_points = self.mounts.read_mountpoints()?;
         let mut partitions = vec![];
         let base_dir_name = fs_wrap::name_from_direntry(dir_entry)?;
         let dir_entry_path = dir_entry
@@ -59,9 +66,11 @@ impl Drives {
                     let dir_name = fs_wrap::name_from_direntry(&entry)?;
                     if dir_name.starts_with(&base_dir_name) {
                         let size = fs_wrap::read_file_to_u64(&build_path(&entry, "/size")?)?;
+                        let mount = self.find_mountpoint_for_partition(&mount_points, &dir_name)?;
                         partitions.push(Partition {
                             name: dir_name,
                             size,
+                            mountpoint: mount,
                         });
                     }
                 }
@@ -70,6 +79,20 @@ impl Drives {
             }
         }
         Ok(partitions)
+    }
+
+    fn find_mountpoint_for_partition(
+        &self,
+        mounts: &[Mount],
+        partition_name: &str,
+    ) -> Result<Option<String>> {
+        let found_mount = mounts
+            .iter()
+            .find(|mount| mount.device.contains(partition_name));
+        if let Some(mount) = found_mount {
+            return Ok(Some(mount.mountpoint.to_owned()));
+        }
+        Ok(None)
     }
 
     fn read_model_and_serial_if_available(
@@ -122,6 +145,7 @@ impl Drives {
     fn new() -> Drives {
         Drives {
             base_path: "/sys/block".to_owned(),
+            mounts: Mounts::new(),
         }
     }
 }
@@ -155,11 +179,19 @@ mod tests {
         let mut removable_file = fs::File::create(next_dir_path.join("removable")).unwrap();
         removable_file.write_all("0".as_bytes()).unwrap();
 
+        let mut size_file = fs::File::create(next_dir_path.join("size")).unwrap();
+        size_file.write_all("1000215216".as_bytes()).unwrap();
+
         // now create two partitions that are represented by subfolders
         let part_one_dir_path = next_dir_path.join("nvme0n1p1");
-        fs::create_dir(part_one_dir_path).unwrap();
+        fs::create_dir(&part_one_dir_path).unwrap();
+        size_file = fs::File::create(part_one_dir_path.as_path().join("size")).unwrap();
+        size_file.write_all("1050624".as_bytes()).unwrap();
+
         let part_two_dir_path = next_dir_path.join("nvme0n1p2");
-        fs::create_dir(part_two_dir_path).unwrap();
+        fs::create_dir(&part_two_dir_path).unwrap();
+        size_file = fs::File::create(part_two_dir_path.as_path().join("size")).unwrap();
+        size_file.write_all("999162511".as_bytes()).unwrap();
         // and create a third dir that isn't following the partition name schema
         // and should therefor not be identified as a partition
         let power_dir_path = next_dir_path.join("power");
@@ -168,6 +200,7 @@ mod tests {
         // execute
         let drives = Drives {
             base_path: temp_dir.path().to_str().unwrap().to_owned(),
+            mounts: Mounts::new(),
         };
         let devices = drives.get_devices().unwrap();
 
