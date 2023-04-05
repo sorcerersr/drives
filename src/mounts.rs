@@ -3,12 +3,12 @@ use anyhow::{anyhow, Result};
 
 #[derive(Debug)]
 pub struct Mount {
-    device: String,
-    mountpoint: String,
-    filesystem: String,
+    pub device: String,
+    pub mountpoint: String,
+    pub filesystem: String,
 }
 
-struct Mounts {
+pub struct Mounts {
     mount_file_path: String,
 }
 
@@ -34,16 +34,11 @@ impl Mounts {
         Ok(mounts)
     }
 
-    fn new() -> Mounts {
+    pub fn new() -> Mounts {
         Mounts {
             mount_file_path: "/proc/mounts".to_owned(),
         }
     }
-}
-
-pub fn read_mountpoints() -> Result<Vec<Mount>> {
-    let mounts = Mounts::new();
-    mounts.read_mountpoints()
 }
 
 #[cfg(test)]
