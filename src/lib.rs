@@ -7,10 +7,12 @@
 
 use anyhow::{anyhow, Context, Result};
 use fs_wrap::build_path;
-use mounts::{Mount, Mounts};
+use mounts::Mounts;
 
 mod fs_wrap;
 mod mounts;
+
+pub use mounts::Mount;
 
 use std::fs::DirEntry;
 
