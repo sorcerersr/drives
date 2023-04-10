@@ -1,10 +1,14 @@
 use crate::fs_wrap::read_lines;
 use anyhow::{anyhow, Result};
 
-#[derive(Debug)]
+/// Informations about the mount point of a drives patition
+#[derive(Debug, Clone)]
 pub struct Mount {
+    /// the partitions linux device name
     pub device: String,
+    /// the path of the mount point
     pub mountpoint: String,
+    /// the filesystem used to mount the partition
     pub filesystem: String,
 }
 

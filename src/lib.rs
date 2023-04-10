@@ -39,7 +39,7 @@ pub struct Partition {
     /// size of the partition on 512 byte blocks
     pub size: u64,
     /// the mountpoint if mounted
-    pub mountpoint: Option<String>,
+    pub mountpoint: Option<Mount>,
 }
 
 struct Drives {
@@ -85,12 +85,12 @@ impl Drives {
         &self,
         mounts: &[Mount],
         partition_name: &str,
-    ) -> Result<Option<String>> {
+    ) -> Result<Option<Mount>> {
         let found_mount = mounts
             .iter()
             .find(|mount| mount.device.contains(partition_name));
         if let Some(mount) = found_mount {
-            return Ok(Some(mount.mountpoint.to_owned()));
+            return Ok(Some(mount.clone()));
         }
         Ok(None)
     }
