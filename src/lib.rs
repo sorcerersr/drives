@@ -5,10 +5,11 @@
 //! Uses `/sys/block` to retreive information.
 //!
 
-use anyhow::{anyhow, Context, Result};
+use error::DrivesError;
 use fs_wrap::build_path;
 use mounts::Mounts;
 
+mod error;
 mod fs_wrap;
 mod mounts;
 
@@ -50,19 +51,19 @@ struct Drives {
 }
 
 impl Drives {
-    fn find_partitions(&self, dir_entry: &DirEntry) -> Result<Vec<Partition>> {
+    fn find_partitions(&self, dir_entry: &DirEntry) -> Result<Vec<Partition>, DrivesError> {
         let mount_points = self.mounts.read_mountpoints()?;
         let mut partitions = vec![];
         let base_dir_name = fs_wrap::name_from_direntry(dir_entry)?;
-        let dir_entry_path = dir_entry
-            .path()
-            .to_str()
-            .with_context(|| format!("failed calling to_str on path {:?}", dir_entry.path()))?
-            .to_owned();
-        for entry in fs_wrap::read_dir(&dir_entry_path)
-            .with_context(|| format!("Failed to read dir {:#?}", dir_entry.path()))?
-        {
-            let entry = entry.with_context(|| "Failed to access dir entry")?;
+        let dir_entry_path = if let Some(dir_entry_path) = dir_entry.path().to_str() {
+            dir_entry_path.to_owned()
+        } else {
+            return Err(DrivesError::NameFromDirEntryFailed);
+        };
+        for entry in fs_wrap::read_dir(&dir_entry_path)? {
+            let entry = entry.map_err(|_err| DrivesError::DiraccessError {
+                directory: dir_entry_path.to_string(),
+            })?;
             if let Ok(file_type) = entry.file_type() {
                 if file_type.is_dir() {
                     let dir_name = fs_wrap::name_from_direntry(&entry)?;
@@ -77,7 +78,9 @@ impl Drives {
                     }
                 }
             } else {
-                return Err(anyhow!("Couldn't get file type for {:?}", entry.path()));
+                return Err(DrivesError::FileTypeError {
+                    filename: fs_wrap::path_to_string(entry.path().as_path()),
+                });
             }
         }
         Ok(partitions)
@@ -87,7 +90,7 @@ impl Drives {
         &self,
         mounts: &[Mount],
         partition_name: &str,
-    ) -> Result<Option<Mount>> {
+    ) -> Result<Option<Mount>, DrivesError> {
         let found_mount = mounts
             .iter()
             .find(|mount| mount.device.contains(partition_name));
@@ -114,12 +117,12 @@ impl Drives {
         (model, serial)
     }
 
-    fn get_devices(&self) -> Result<Vec<Device>> {
+    fn get_devices(&self) -> Result<Vec<Device>, DrivesError> {
         let mut devices = vec![];
-        for entry in
-            fs_wrap::read_dir(&self.base_path).with_context(|| "Failed to access /sys/block")?
-        {
-            let entry = entry.with_context(|| "Failed to access dir entry")?;
+        for entry in fs_wrap::read_dir(&self.base_path)? {
+            let entry = entry.map_err(|_err| DrivesError::DiraccessError {
+                directory: self.base_path.to_string(),
+            })?;
 
             let device_name = fs_wrap::name_from_direntry(&entry)?;
 
@@ -154,7 +157,7 @@ impl Drives {
 
 /// Reads /sys/block and its sub-directories to determine and return drives as a list of
 /// devices with partitions
-pub fn get_devices() -> Result<Vec<Device>> {
+pub fn get_devices() -> Result<Vec<Device>, DrivesError> {
     let drives = Drives::new();
     drives.get_devices()
 }

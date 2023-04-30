@@ -1,5 +1,4 @@
-use crate::fs_wrap::read_lines;
-use anyhow::{anyhow, Result};
+use crate::{error::DrivesError, fs_wrap::read_lines};
 
 /// Informations about the mount point of a drives patition
 #[derive(Debug, Clone)]
@@ -17,7 +16,7 @@ pub struct Mounts {
 }
 
 impl Mounts {
-    pub fn read_mountpoints(&self) -> Result<Vec<Mount>> {
+    pub fn read_mountpoints(&self) -> Result<Vec<Mount>, DrivesError> {
         let mut mounts = vec![];
         if let Ok(lines) = read_lines(&self.mount_file_path) {
             lines.for_each(|line| {
@@ -32,7 +31,7 @@ impl Mounts {
                 }
             });
         } else {
-            return Err(anyhow!("Failed to read mounts from /proc/mounts"));
+            return Err(DrivesError::ReadingMountsFailed);
         }
 
         Ok(mounts)

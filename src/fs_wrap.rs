@@ -3,57 +3,61 @@
  * implementing struct to be able to mock it with 'mockall'.
  *
  */
-use anyhow::{anyhow, Context, Result};
+use crate::error::DrivesError;
 use std::{
     fs::{self, DirEntry, File, ReadDir},
     io::{self, BufRead, Read},
     path::Path,
 };
 
-pub fn read_dir(path: &str) -> io::Result<ReadDir> {
-    fs::read_dir(path)
+pub fn read_dir(path: &str) -> Result<ReadDir, DrivesError> {
+    let readdir = fs::read_dir(path).map_err(|_err| DrivesError::DiraccessError {
+        directory: path.to_string(),
+    })?;
+    Ok(readdir)
 }
 
-pub fn read_bool_file(path: &str) -> Result<bool> {
-    let content = read_file_to_string(Path::new(path))
-        .with_context(|| format!("Failed to read file from {}", path))?;
+pub fn read_bool_file(path: &str) -> Result<bool, DrivesError> {
+    let content = read_file_to_string(Path::new(path))?;
     Ok("1".eq(&content))
 }
 
-pub fn name_from_direntry(entry: &DirEntry) -> Result<String> {
+pub fn name_from_direntry(entry: &DirEntry) -> Result<String, DrivesError> {
     if let Ok(result) = entry.file_name().into_string() {
         Ok(result)
     } else {
-        return Err(anyhow!("Failed to convert OsString to String"));
+        Err(DrivesError::NameFromDirEntryFailed)
     }
 }
 
-pub fn build_path(dir_entry: &DirEntry, path_to_add: &str) -> Result<String> {
+pub fn build_path(dir_entry: &DirEntry, path_to_add: &str) -> Result<String, DrivesError> {
     let mut path = if let Some(path) = dir_entry.path().to_str() {
         path.to_string()
     } else {
-        return Err(anyhow!("Failed to append '{}' to path", path_to_add));
+        return Err(DrivesError::PathAppendFailed);
     };
     path.push_str(path_to_add);
     Ok(path)
 }
 
-pub fn read_file_to_string(path: &Path) -> io::Result<String> {
-    let mut file = File::open(path)?;
+pub fn read_file_to_string(path: &Path) -> Result<String, DrivesError> {
+    let mut file = File::open(path).map_err(|_err| DrivesError::FileAccessError {
+        filename: path_to_string(path),
+    })?;
 
     let mut result = String::new();
-    file.read_to_string(&mut result)?;
+    file.read_to_string(&mut result);
     result = result.replace('\n', "").trim().to_owned();
     Ok(result)
 }
 
-pub fn read_file_to_u64(path: &str) -> Result<u64> {
+pub fn read_file_to_u64(path: &str) -> Result<u64, DrivesError> {
     let content = read_file_to_string(Path::new(path))?;
 
     let size_as_u64 = if let Ok(size) = content.parse() {
         size
     } else {
-        return Err(anyhow!("Failed to convert '{}' to u64", content));
+        return Err(DrivesError::ConversionToU64Failed);
     };
     Ok(size_as_u64)
 }
@@ -64,6 +68,14 @@ where
 {
     let file = File::open(filename)?;
     Ok(io::BufReader::new(file).lines())
+}
+
+pub fn path_to_string(path: &Path) -> String {
+    if let Some(path_str) = path.to_str() {
+        path_str.to_string()
+    } else {
+        "???".to_string()
+    }
 }
 
 #[cfg(test)]
