@@ -5,7 +5,6 @@
 //! Uses `/sys/block` to retreive information.
 //!
 
-use error::DrivesError;
 use fs_wrap::build_path;
 use mounts::Mounts;
 
@@ -13,6 +12,7 @@ mod error;
 mod fs_wrap;
 mod mounts;
 
+pub use error::DrivesError;
 pub use mounts::Mount;
 
 use std::fs::DirEntry;
