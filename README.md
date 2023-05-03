@@ -1,4 +1,4 @@
-[![Build and Tests](https://github.com/sorcerersr/drives/actions/workflows/build_and_test.yml/badge.svg)](https://github.com/sorcerersr/drives/actions/workflows/build_and_test.yml)
+[![Build and Tests](https://github.com/sorcerersr/drives/actions/workflows/build_and_test.yml/badge.svg)](https://github.com/sorcerersr/drives/actions/workflows/build_and_test.yml) [![crates.io](https://img.shields.io/crates/v/drives)](https://crates.io/crates/drives) [![docs.rs](https://img.shields.io/docsrs/drives/latest)](https://docs.rs/drives/latest/drives/)
 
 # drives
 
@@ -14,13 +14,6 @@ For an simple example see [simple_main.rs](examples/simple_main.rs):
 cargo run --example simple_main
 ```
 
-## Documentation
-
-Documentation can be found on [docs.rs](https://docs.rs/drives/latest/drives/).
-
-## crates.io
-
-Drives can be found on [crates.io](https://crates.io/crates/drives/).
 
 ## License
 
