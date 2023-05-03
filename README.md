@@ -1,4 +1,4 @@
-[![Build](https://github.com/sorcerersr/drives/actions/workflows/build_and_test.yml/badge.svg?branch=main&event=push)](https://github.com/sorcerersr/drives/actions/workflows/build_and_test.yml)
+[![Build and Tests](https://github.com/sorcerersr/drives/actions/workflows/build_and_test.yml/badge.svg)](https://github.com/sorcerersr/drives/actions/workflows/build_and_test.yml)
 
 # drives
 
