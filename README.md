@@ -1,4 +1,7 @@
-[![Build and Tests](https://github.com/sorcerersr/drives/actions/workflows/build_and_test.yml/badge.svg)](https://github.com/sorcerersr/drives/actions/workflows/build_and_test.yml) [![crates.io](https://img.shields.io/crates/v/drives)](https://crates.io/crates/drives) [![docs.rs](https://img.shields.io/docsrs/drives/latest)](https://docs.rs/drives/latest/drives/)
+[![Build and Tests](https://github.com/sorcerersr/drives/actions/workflows/build_and_test.yml/badge.svg)](https://github.com/sorcerersr/drives/actions/workflows/build_and_test.yml)
+[![codecov](https://codecov.io/gh/sorcerersr/drives/branch/main/graph/badge.svg?token=4ATZX63FP6)](https://codecov.io/gh/sorcerersr/drives)
+[![crates.io](https://img.shields.io/crates/v/drives)](https://crates.io/crates/drives)
+[![docs.rs](https://img.shields.io/docsrs/drives/latest)](https://docs.rs/drives/latest/drives/)
 
 # drives
 
