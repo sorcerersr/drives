@@ -11,6 +11,7 @@ use mounts::Mounts;
 mod error;
 mod fs_wrap;
 mod mounts;
+mod size;
 
 pub use error::DrivesError;
 pub use mounts::Mount;
