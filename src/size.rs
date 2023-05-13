@@ -42,17 +42,36 @@ impl Size {
     }
 
     pub fn get_size_in_unit(&self, unit: Unit) -> f64 {
-        self.raw_size.) / unit.conversion_factor()
+        let mut size = self.raw_size as f64 / unit.conversion_factor() as f64;
+        // round to have max two decimal digits
+        (size * 100.0).round() / 100.0
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::Size;
+    use super::Unit;
 
     #[test]
     fn test_get_raw_size() {
         let size = Size::new(12345);
         assert_eq!(size.get_raw_size(), 12345);
+    }
+
+    #[test]
+    fn test_get_size_in_unit() {
+        let mut size = Size::new(8192);
+        assert_eq!(size.get_size_in_unit(Unit::KiloByte), 4096.0);
+        assert_eq!(size.get_size_in_unit(Unit::MegaByte), 4.0);
+
+        size = Size::new(1050624);
+        assert_eq!(size.get_size_in_unit(Unit::MegaByte), 513.0);
+        assert_eq!(size.get_size_in_unit(Unit::GigaByte), 0.5);
+
+        size = Size::new(999162511);
+        assert_eq!(size.get_size_in_unit(Unit::MegaByte), 487872.32);
+        assert_eq!(size.get_size_in_unit(Unit::GigaByte), 476.44);
+        assert_eq!(size.get_size_in_unit(Unit::TeraByte), 0.47);
     }
 }
