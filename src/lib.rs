@@ -15,6 +15,7 @@ mod size;
 
 pub use error::DrivesError;
 pub use mounts::Mount;
+use size::Size;
 
 use std::fs::DirEntry;
 
@@ -32,7 +33,7 @@ pub struct Device {
     pub model: Option<String>,
     /// the hardware serial string
     pub serial: Option<String>,
-    pub size: u64,
+    pub size: Size,
 }
 
 /// partition of a device
@@ -41,7 +42,7 @@ pub struct Partition {
     /// the name of the partitions
     pub name: String,
     /// size of the partition on 512 byte blocks
-    pub size: u64,
+    pub size: Size,
     /// the mountpoint if mounted
     pub mountpoint: Option<Mount>,
 }
@@ -73,7 +74,7 @@ impl Drives {
                         let mount = self.find_mountpoint_for_partition(&mount_points, &dir_name)?;
                         partitions.push(Partition {
                             name: dir_name,
-                            size,
+                            size: Size::new(size),
                             mountpoint: mount,
                         });
                     }
@@ -141,7 +142,7 @@ impl Drives {
                 is_removable: removable,
                 model: model_and_serial.0,
                 serial: model_and_serial.1,
-                size,
+                size: Size::new(size),
             };
             devices.push(device);
         }
