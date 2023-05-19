@@ -15,7 +15,7 @@ mod size;
 
 pub use error::DrivesError;
 pub use mounts::Mount;
-use size::Size;
+pub use size::{Size, Unit};
 
 use std::fs::DirEntry;
 

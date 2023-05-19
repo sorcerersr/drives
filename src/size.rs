@@ -1,8 +1,10 @@
+/// A representation of a size information
 #[derive(Debug)]
 pub struct Size {
     raw_size: u64,
 }
 
+/// supported units for conversion and display
 pub enum Unit {
     Blocks,
     KiloByte,
@@ -48,16 +50,21 @@ impl Size {
         Size { raw_size }
     }
 
+    /// returns the raw size value which is based on a 512 bytes block size
     pub fn get_raw_size(&self) -> u64 {
         self.raw_size
     }
 
+    /// returns the size in the requested unit
+    /// (rounded to two decimal digits)
     pub fn get_size_in_unit(&self, unit: &Unit) -> f64 {
         let size = self.raw_size as f64 / unit.conversion_factor() as f64;
         // round to have max two decimal digits
         (size * 100.0).round() / 100.0
     }
 
+    /// returns the size in a human readable representation by automatically using
+    /// a suitable unit
     pub fn as_human_readable_string(&self) -> String {
         let unit = Unit::most_suitable_unit_for_raw_size(self.raw_size);
         let converted_size = self.get_size_in_unit(&unit);
