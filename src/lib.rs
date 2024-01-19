@@ -6,12 +6,14 @@
 //!
 
 use fs_wrap::build_path;
+use gpt::GptUUID;
 use mounts::Mounts;
 
 mod error;
 mod fs_wrap;
 mod mounts;
 mod size;
+mod gpt;
 
 pub use error::DrivesError;
 pub use mounts::Mount;
@@ -34,6 +36,7 @@ pub struct Device {
     /// the hardware serial string
     pub serial: Option<String>,
     pub size: Size,
+    pub uuid: GptUUID,
 }
 
 /// partition of a device
@@ -136,14 +139,16 @@ impl Drives {
             let model_and_serial = self.read_model_and_serial_if_available(&entry);
             let size = fs_wrap::read_file_to_u64(&build_path(&entry, "/size")?)?;
 
-            let device = Device {
+            let mut device = Device {
                 name: device_name.clone(),
                 partitions,
                 is_removable: removable,
                 model: model_and_serial.0,
                 serial: model_and_serial.1,
                 size: Size::new(size),
+                uuid: GptUUID::NotAvailable,
             };
+            device = gpt::enrich_with_gpt_uuid(device);
             devices.push(device);
         }
         Ok(devices)
