@@ -6,7 +6,6 @@
 //!
 
 use fs_wrap::build_path;
-use gpt::GptUUID;
 use mounts::Mounts;
 
 mod error;
@@ -18,6 +17,7 @@ mod size;
 pub use error::DrivesError;
 pub use mounts::Mount;
 pub use size::{Size, Unit};
+pub use gpt::GptUUID;
 
 use std::fs::DirEntry;
 
