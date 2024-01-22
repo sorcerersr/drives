@@ -11,9 +11,9 @@ use mounts::Mounts;
 
 mod error;
 mod fs_wrap;
+mod gpt;
 mod mounts;
 mod size;
-mod gpt;
 
 pub use error::DrivesError;
 pub use mounts::Mount;
@@ -35,7 +35,9 @@ pub struct Device {
     pub model: Option<String>,
     /// the hardware serial string
     pub serial: Option<String>,
+    /// size of the device
     pub size: Size,
+    /// the GPT Disk GUID (GPT specific UUID)
     pub uuid: GptUUID,
 }
 
