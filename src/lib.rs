@@ -37,7 +37,7 @@ pub struct Device {
     pub serial: Option<String>,
     /// size of the device
     pub size: Size,
-    /// the GPT Disk GUID (GPT specific UUID)
+    /// the GUID from GPT (needs feature "gpt" to be enabled)
     pub uuid: GptUUID,
 }
 
