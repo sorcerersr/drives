@@ -30,17 +30,27 @@ pub fn enrich_with_gpt_uuid(mut device: Device) -> Device {
 }
 
 // When the feature "gpt" is enabled then this function will actually read the
-// partition table (gpt) to get the UUID
+// partition table (gpt) to get the UUID for the device and the partitions
 #[cfg(feature = "gpt")]
 pub fn enrich_with_gpt_uuid(mut device: Device) -> Device {
+
     let diskpath = std::path::Path::new(DEV_DIR).join(device.name.to_string());
     let cfg = gpt::GptConfig::new().writable(false);
     match cfg.open(diskpath) {
         Err(error) => device.uuid = GptUUID::IoError(error),
-        Ok(disk) => match disk.primary_header() {
+        Ok(disk) => {
+            match disk.primary_header() {
             None => device.uuid = GptUUID::NotAvailable,
             Some(disk_header) => {
-                device.uuid = GptUUID::UUID(disk_header.disk_guid.as_hyphenated().to_string())
+                device.uuid = GptUUID::UUID(disk_header.disk_guid.as_hyphenated().to_string());
+                }
+
+            };
+            for partition in device.partitions.iter_mut() {
+                match disk.partitions().get(&partition.number){
+                    Some(gpt_partition) => partition.part_uuid = GptUUID::UUID(gpt_partition.part_guid.as_hyphenated().to_string()),
+                    None => partition.part_uuid = GptUUID::NotAvailable,
+                }
             }
         },
     };

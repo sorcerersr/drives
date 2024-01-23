@@ -62,6 +62,17 @@ pub fn read_file_to_u64(path: &str) -> Result<u64, DrivesError> {
     Ok(size_as_u64)
 }
 
+pub fn read_file_to_u32(path: &str) -> Result<u32, DrivesError> {
+    let content = read_file_to_string(Path::new(path))?;
+
+    let size_as_u32 = if let Ok(size) = content.parse() {
+        size
+    } else {
+        return Err(DrivesError::ConversionToU32Failed);
+    };
+    Ok(size_as_u32)
+}
+
 pub fn read_lines<P>(filename: P) -> io::Result<io::Lines<io::BufReader<File>>>
 where
     P: AsRef<Path>,
@@ -112,5 +123,29 @@ mod tests {
         // call the method under test
         let result = read_file_to_string(test_file.path());
         assert_eq!("content", result.unwrap());
+    }
+
+    #[test]
+    fn test_read_file_to_32() {
+        // prepare a temporary file to read from
+        let mut test_file = NamedTempFile::new().unwrap();
+        test_file.write_all("2".as_bytes()).unwrap();
+
+        // call the method under test
+        let result = read_file_to_u32(test_file.path().to_str().unwrap());
+        let expected:u32 = 2;
+        assert_eq!(expected, result.unwrap());
+    }
+
+    #[test]
+    fn test_read_file_to_64() {
+        // prepare a temporary file to read from
+        let mut test_file = NamedTempFile::new().unwrap();
+        test_file.write_all("42".as_bytes()).unwrap();
+
+        // call the method under test
+        let result = read_file_to_u64(test_file.path().to_str().unwrap());
+        let expected:u64 = 42;
+        assert_eq!(expected, result.unwrap());
     }
 }

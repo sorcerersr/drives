@@ -48,8 +48,12 @@ pub struct Partition {
     pub name: String,
     /// size of the partition on 512 byte blocks
     pub size: Size,
+    /// the partition number
+    pub number: u32,
     /// the mountpoint if mounted
     pub mountpoint: Option<Mount>,
+    /// the PartUUID from GPT (needs feature "gpt" to be enabled)
+    pub part_uuid: GptUUID,
 }
 
 struct Drives {
@@ -77,10 +81,13 @@ impl Drives {
                     if dir_name.starts_with(&base_dir_name) {
                         let size = fs_wrap::read_file_to_u64(&build_path(&entry, "/size")?)?;
                         let mount = self.find_mountpoint_for_partition(&mount_points, &dir_name)?;
+                        let number = fs_wrap::read_file_to_u32(&build_path(&entry, "/partition")?)?;
                         partitions.push(Partition {
                             name: dir_name,
                             size: Size::new(size),
+                            number,
                             mountpoint: mount,
+                            part_uuid: GptUUID::NotAvailable,
                         });
                     }
                 }
