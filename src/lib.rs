@@ -208,11 +208,20 @@ mod tests {
         fs::create_dir(&part_one_dir_path).unwrap();
         size_file = fs::File::create(part_one_dir_path.as_path().join("size")).unwrap();
         size_file.write_all("1050624".as_bytes()).unwrap();
+        
+        let mut partition_file = fs::File::create(part_one_dir_path.as_path().join("partition")).unwrap();
+        partition_file.write_all("1".as_bytes()).unwrap();
+
+
 
         let part_two_dir_path = next_dir_path.join("nvme0n1p2");
         fs::create_dir(&part_two_dir_path).unwrap();
         size_file = fs::File::create(part_two_dir_path.as_path().join("size")).unwrap();
         size_file.write_all("999162511".as_bytes()).unwrap();
+        let mut partition_file = fs::File::create(part_two_dir_path.as_path().join("partition")).unwrap();
+        partition_file.write_all("2".as_bytes()).unwrap();
+
+        
         // and create a third dir that isn't following the partition name schema
         // and should therefor not be identified as a partition
         let power_dir_path = next_dir_path.join("power");
