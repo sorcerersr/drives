@@ -33,26 +33,27 @@ pub fn enrich_with_gpt_uuid(mut device: Device) -> Device {
 // partition table (gpt) to get the UUID for the device and the partitions
 #[cfg(feature = "gpt")]
 pub fn enrich_with_gpt_uuid(mut device: Device) -> Device {
-
     let diskpath = std::path::Path::new(DEV_DIR).join(device.name.to_string());
     let cfg = gpt::GptConfig::new().writable(false);
     match cfg.open(diskpath) {
         Err(error) => device.uuid = GptUUID::IoError(error),
         Ok(disk) => {
             match disk.primary_header() {
-            None => device.uuid = GptUUID::NotAvailable,
-            Some(disk_header) => {
-                device.uuid = GptUUID::UUID(disk_header.disk_guid.as_hyphenated().to_string());
+                None => device.uuid = GptUUID::NotAvailable,
+                Some(disk_header) => {
+                    device.uuid = GptUUID::UUID(disk_header.disk_guid.as_hyphenated().to_string());
                 }
-
             };
             for partition in device.partitions.iter_mut() {
-                match disk.partitions().get(&partition.number){
-                    Some(gpt_partition) => partition.part_uuid = GptUUID::UUID(gpt_partition.part_guid.as_hyphenated().to_string()),
+                match disk.partitions().get(&partition.number) {
+                    Some(gpt_partition) => {
+                        partition.part_uuid =
+                            GptUUID::UUID(gpt_partition.part_guid.as_hyphenated().to_string())
+                    }
                     None => partition.part_uuid = GptUUID::NotAvailable,
                 }
             }
-        },
+        }
     };
 
     device
@@ -66,11 +67,26 @@ mod tests {
     #[cfg(feature = "gpt")]
     #[test]
     fn test_enrich_with_gpt_uuid() {
-        use crate::Size;
+        use crate::{get_devices, Partition, Size};
+
+        let partition1 = Partition {
+            name: "sda1".to_string(),
+            size: Size::new(512),
+            number: 1,
+            mountpoint: None,
+            part_uuid: GptUUID::NotAvailable,
+        };
+        let partition2 = Partition {
+            name: "sda2".to_string(),
+            size: Size::new(512),
+            number: 2,
+            mountpoint: None,
+            part_uuid: GptUUID::NotAvailable,
+        };
 
         let mut device = Device {
             name: "gptdisk.img".to_string(),
-            partitions: Vec::new(),
+            partitions: vec![partition1, partition2],
             is_removable: false,
             model: None,
             serial: None,
@@ -82,6 +98,26 @@ mod tests {
         match device.uuid {
             GptUUID::UUID(uuid) => assert_eq!("f0ce7b2c-74af-47e4-8141-b2fe24ac20cc", uuid),
             _ => panic!("No UUID"),
+        }
+        match &device
+            .partitions
+            .iter()
+            .find(|&partition| partition.number == 1)
+            .unwrap()
+            .part_uuid
+        {
+            GptUUID::UUID(uuid) => assert_eq!("3cdd6997-9b47-46f1-a160-49546976c24e", uuid),
+            _ => panic!("Partition 1 - no UUID"),
+        }
+        match &device
+            .partitions
+            .iter()
+            .find(|&partition| partition.number == 2)
+            .unwrap()
+            .part_uuid
+        {
+            GptUUID::UUID(uuid) => assert_eq!("4d3adf65-ff1b-473c-8f5e-b6c8d228b8d4", uuid),
+            _ => panic!("Partition 2 - no UUID"),
         }
     }
 }

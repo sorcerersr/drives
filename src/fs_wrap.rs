@@ -133,7 +133,7 @@ mod tests {
 
         // call the method under test
         let result = read_file_to_u32(test_file.path().to_str().unwrap());
-        let expected:u32 = 2;
+        let expected: u32 = 2;
         assert_eq!(expected, result.unwrap());
     }
 
@@ -145,7 +145,7 @@ mod tests {
 
         // call the method under test
         let result = read_file_to_u64(test_file.path().to_str().unwrap());
-        let expected:u64 = 42;
+        let expected: u64 = 42;
         assert_eq!(expected, result.unwrap());
     }
 }
