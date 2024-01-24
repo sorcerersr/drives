@@ -10,12 +10,14 @@ use mounts::Mounts;
 
 mod error;
 mod fs_wrap;
+mod gpt;
 mod mounts;
 mod size;
 
 pub use error::DrivesError;
 pub use mounts::Mount;
 pub use size::{Size, Unit};
+pub use gpt::GptUUID;
 
 use std::fs::DirEntry;
 
@@ -33,7 +35,10 @@ pub struct Device {
     pub model: Option<String>,
     /// the hardware serial string
     pub serial: Option<String>,
+    /// size of the device
     pub size: Size,
+    /// the GUID from GPT (needs feature "gpt" to be enabled)
+    pub uuid: GptUUID,
 }
 
 /// partition of a device
@@ -43,8 +48,12 @@ pub struct Partition {
     pub name: String,
     /// size of the partition on 512 byte blocks
     pub size: Size,
+    /// the partition number
+    pub number: u32,
     /// the mountpoint if mounted
     pub mountpoint: Option<Mount>,
+    /// the PartUUID from GPT (needs feature "gpt" to be enabled)
+    pub part_uuid: GptUUID,
 }
 
 struct Drives {
@@ -72,10 +81,13 @@ impl Drives {
                     if dir_name.starts_with(&base_dir_name) {
                         let size = fs_wrap::read_file_to_u64(&build_path(&entry, "/size")?)?;
                         let mount = self.find_mountpoint_for_partition(&mount_points, &dir_name)?;
+                        let number = fs_wrap::read_file_to_u32(&build_path(&entry, "/partition")?)?;
                         partitions.push(Partition {
                             name: dir_name,
                             size: Size::new(size),
+                            number,
                             mountpoint: mount,
+                            part_uuid: GptUUID::NotAvailable,
                         });
                     }
                 }
@@ -136,14 +148,16 @@ impl Drives {
             let model_and_serial = self.read_model_and_serial_if_available(&entry);
             let size = fs_wrap::read_file_to_u64(&build_path(&entry, "/size")?)?;
 
-            let device = Device {
+            let mut device = Device {
                 name: device_name.clone(),
                 partitions,
                 is_removable: removable,
                 model: model_and_serial.0,
                 serial: model_and_serial.1,
                 size: Size::new(size),
+                uuid: GptUUID::NotAvailable,
             };
+            device = gpt::enrich_with_gpt_uuid(device);
             devices.push(device);
         }
         Ok(devices)
@@ -194,11 +208,20 @@ mod tests {
         fs::create_dir(&part_one_dir_path).unwrap();
         size_file = fs::File::create(part_one_dir_path.as_path().join("size")).unwrap();
         size_file.write_all("1050624".as_bytes()).unwrap();
+        
+        let mut partition_file = fs::File::create(part_one_dir_path.as_path().join("partition")).unwrap();
+        partition_file.write_all("1".as_bytes()).unwrap();
+
+
 
         let part_two_dir_path = next_dir_path.join("nvme0n1p2");
         fs::create_dir(&part_two_dir_path).unwrap();
         size_file = fs::File::create(part_two_dir_path.as_path().join("size")).unwrap();
         size_file.write_all("999162511".as_bytes()).unwrap();
+        let mut partition_file = fs::File::create(part_two_dir_path.as_path().join("partition")).unwrap();
+        partition_file.write_all("2".as_bytes()).unwrap();
+
+        
         // and create a third dir that isn't following the partition name schema
         // and should therefor not be identified as a partition
         let power_dir_path = next_dir_path.join("power");

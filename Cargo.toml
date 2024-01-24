@@ -11,11 +11,11 @@ authors = ["Stefan Rabmund <sorcerersr@mailbox.org>"]
 readme = "crates-io.md"
 
 [dependencies]
+gpt = {version = "3.1.0", optional=true}
 thiserror = "1.0"
 
 [dev-dependencies]
 tempfile = "3"
-
 
 [[example]]
 name = "simple_main"

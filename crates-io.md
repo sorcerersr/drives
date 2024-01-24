@@ -5,7 +5,8 @@
 
 A rust library (crate) for listing mounted or mountable drives on linux (flash drives, sd-cards, etc.)
 
-Uses the virtual sysfs filesystem (/sys) to gather information about the block devices known by the linux kernel.
+Uses the virtual kernel filesystems (/sys, /proc and /dev) to gather information about the block devices known by the linux kernel.
+Optionally reads the GUID Partition Table (GPT) to enrich gathered data with informations from the partition table.
 
 ## Data
 
@@ -15,10 +16,12 @@ Uses the virtual sysfs filesystem (/sys) to gather information about the block d
   * size
   * partitions
   * is removable
+  * uuid (optionally from GPT)
 * partition
   * name
   * size
   * mountpoint (path, filesystem)
+  * part_uuid (optionally from GPT)
 
 ## Example
 
@@ -31,6 +34,10 @@ cargo run --example simple_main
 ## Documentation
 
 Documentation can be found on [docs.rs](https://docs.rs/drives/latest/drives/).
+
+## Optional Data from GUID Partition Table (GPT)
+
+Currently only the UUID for a device and the PART_UUID of partitions are retreived using the GPT. This needs the feature "gpt" to be enabled.
 
 ## License
 
