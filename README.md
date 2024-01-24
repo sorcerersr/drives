@@ -23,6 +23,7 @@ Optionally reads the GUID Partition Table (GPT) to enrich gathered data with inf
   * name
   * size
   * mountpoint (path, filesystem)
+  * part_uuid (optionally from GPT)
 
 ## Example
 
@@ -34,8 +35,7 @@ cargo run --example simple_main
 
 ## Optional Data from GUID Partition Table (GPT)
 
-Currently only the UUID for a device is retreived using the GPT.
-This needs the feature "gpt" to be enabled.
+Currently only the UUID for a device and the PART_UUID of partitions are retreived using the GPT. This needs the feature "gpt" to be enabled.
 
 ## License
 
