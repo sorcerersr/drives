@@ -12,7 +12,7 @@ readme = "crates-io.md"
 
 [dependencies]
 gpt = {version = "4.1.0", optional=true}
-thiserror = "1.0"
+thiserror = "^2.0"
 
 [dev-dependencies]
 tempfile = "3"
