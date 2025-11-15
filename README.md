@@ -33,6 +33,13 @@ For an simple example see [simple_main.rs](examples/simple_main.rs):
 cargo run --example simple_main
 ```
 
+Or when the _gpt_-feature should be enabled:
+```
+cargo build --features gpt --example simple_main
+sudo target/debug/examples/simple_main
+```
+Note: To read the _gpt_ elevated priviliges are needed, so sudo is used in this example. 
+
 ## Optional Data from GUID Partition Table (GPT)
 
 Currently only the UUID for a device and the PART_UUID of partitions are retreived using the GPT. This needs the feature "gpt" to be enabled.

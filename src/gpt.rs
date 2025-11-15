@@ -12,6 +12,7 @@ const DEV_DIR: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/resources", "/test")
 #[derive(Debug)]
 pub enum GptUUID {
     /// an io error happened when opening the device for read access
+    #[cfg(feature = "gpt")]
     IoError(::gpt::GptError),
     /// the UUID from the partition table (gpt) as a hyphenated string
     UUID(String),
