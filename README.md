@@ -37,6 +37,10 @@ cargo run --example simple_main
 
 Currently only the UUID for a device and the PART_UUID of partitions are retreived using the GPT. This needs the feature "gpt" to be enabled.
 
+```
+cargo build --features gpt
+```
+
 ## License
 
 

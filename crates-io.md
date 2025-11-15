@@ -39,6 +39,10 @@ Documentation can be found on [docs.rs](https://docs.rs/drives/latest/drives/).
 
 Currently only the UUID for a device and the PART_UUID of partitions are retreived using the GPT. This needs the feature "gpt" to be enabled.
 
+```
+cargo build --features gpt
+```
+
 ## License
 
 

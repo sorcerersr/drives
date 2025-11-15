@@ -12,7 +12,7 @@ const DEV_DIR: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/resources", "/test")
 #[derive(Debug)]
 pub enum GptUUID {
     /// an io error happened when opening the device for read access
-    IoError(std::io::Error),
+    IoError(::gpt::GptError),
     /// the UUID from the partition table (gpt) as a hyphenated string
     UUID(String),
     /// the feature "gpt" was not enabled
@@ -39,8 +39,8 @@ pub fn enrich_with_gpt_uuid(mut device: Device) -> Device {
         Err(error) => device.uuid = GptUUID::IoError(error),
         Ok(disk) => {
             match disk.primary_header() {
-                None => device.uuid = GptUUID::NotAvailable,
-                Some(disk_header) => {
+                Err(_) => device.uuid = GptUUID::NotAvailable,
+                Ok(disk_header) => {
                     device.uuid = GptUUID::UUID(disk_header.disk_guid.as_hyphenated().to_string());
                 }
             };
@@ -67,7 +67,7 @@ mod tests {
     #[cfg(feature = "gpt")]
     #[test]
     fn test_enrich_with_gpt_uuid() {
-        use crate::{get_devices, Partition, Size};
+        use crate::{Partition, Size};
 
         let partition1 = Partition {
             name: "sda1".to_string(),
